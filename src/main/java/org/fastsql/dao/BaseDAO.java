@@ -138,16 +138,6 @@ public abstract class BaseDAO<E, ID> {
         //SQL语句部分字符串构建器
         final StringBuilder nameBuilder = new StringBuilder();
         final StringBuilder valueBuilder = new StringBuilder();
-        /*
-        for (Field field : fields) {
-            if (EntityRefelectUtils.getFieldValue(entity, field) != null) {
-                nameBuilder.append(",").append(StringExtUtils.camelToUnderline(field.getName()));
-                valueBuilder.append(",:").append(field.getName());
-            }
-        }
-        String insertSql = "INSERT INTO " + tableName + "(" + nameBuilder.toString().replaceFirst(",", "") + ") " +
-        "VALUES(" + valueBuilder.toString().replaceFirst(",", "") + ")";
-        */
         //遍历
         fields.stream()
                 .filter(field -> EntityRefelectUtils.getFieldValue(entity, field) != null)
@@ -158,7 +148,7 @@ public abstract class BaseDAO<E, ID> {
         //构建SQL实例
         final SQL sql = sqlFactory.createSQL()
                 .INSERT_INTO(tableName, nameBuilder.deleteCharAt(0).toString())
-                .VALUES(valueBuilder.delete(0, 1).toString())
+                .VALUES(valueBuilder.deleteCharAt(0).toString())
                 .beanParameter(entity);
         //若useBeforeInsert设置为true，则执行拦截方法
         if (useBeforeInsert) {
@@ -287,15 +277,6 @@ public abstract class BaseDAO<E, ID> {
                 sqlBuilder.append("," + StringExtUtils.camelToUnderline(field.getName()) +
                         "=:" +
                         field.getName()));
-        /*
-        for (Field field : fieldsWithoutId) {
-            if (EntityRefelectUtils.getFieldValue(entity, field) != null) {
-                sqlBuilder.append("," + StringExtUtils.camelToUnderline(field.getName()) + "=:" + field.getName());
-            }
-        }
-        String setValueSql = sqlBuilder.toString().replaceFirst(",", "");
-        String sql = "UPDATE " + tableName + " SET " + setValueSql + " WHERE id=:id";//set sql
-        */
         final SQL sql = sqlFactory.createSQL()
                 .UPDATE(tableName)
                 .SET(sqlBuilder.deleteCharAt(0).toString())
@@ -323,11 +304,6 @@ public abstract class BaseDAO<E, ID> {
         for (String column : columns) {
             sqlBuilder.append("," + column + "=:" + EntityRefelectUtils.underlineToCamelFirstLower(column));
         }
-        /*
-        String setValueSql = sqlBuilder.toString().replaceFirst(",", "");
-        String sql = "UPDATE " + tableName + " SET " + setValueSql + " WHERE id=:id";//set sql
-        int count = namedParameterJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(entity));
-        */
         final SQL sql = sqlFactory.createSQL()
                 .UPDATE(tableName)
                 .SET(sqlBuilder.deleteCharAt(0).toString())
@@ -353,14 +329,10 @@ public abstract class BaseDAO<E, ID> {
         if (useBeforeDelete) {
             beforeDelete(id);
         }
-        //String sql = "DELETE FROM " + tableName + " WHERE " + idColumnName + " = ?";
         final SQL sql = sqlFactory.createSQL()
                 .DELETE_FROM(tableName)
                 .WHERE(idColumnName + "=:" + idColumnName)
                 .mapItemsParameter("id", id);
-        /*
-        int count = namedParameterJdbcTemplate.getJdbcOperations().update(sql, id);
-        */
         final int count = sql.update();
         if (useAfterDelete) {
             afterDelete(id, count);
